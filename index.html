@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>XPS-8 Pocket Control Pro</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a56db">
+  
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & TEMAS DINÂMICOS (Otimizado para Telas AMOLED 6")
+       ========================================================================== */
+    :root {
+      /* --- TEMA ESCURO PADRÃO (Inalterado) --- */
+      --bg-main: #0c0c0e;
+      --bg-surface: #16161a;
+      --bg-strip: #1e1e24;
+      --primary: #1a56db;
+      --primary-hover: #2563eb;
+      --accent-solo: #eab308;
+      --danger: #ef4444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border: #2d2d34;
+      --fader-track: #111113;
+      --input-bg: #27272a;
+      --fader-thumb-bg: linear-gradient(180deg, #3f3f46, #18181b);
+      --fader-thumb-border: #52525b;
+      --font-stack: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* --- TEMA CLARO ADICIONAL --- */
+    body.light-theme {
+      --bg-main: #f0f2f5;
+      --bg-surface: #ffffff;
+      --bg-strip: #e4e6eb;
+      --primary: #1a56db;
+      --primary-hover: #1c4ed8;
+      --accent-solo: #d97706;
+      --danger: #dc2626;
+      --text-main: #1c1e21;
+      --text-muted: #65676b;
+      --border: #ccd0d5;
+      --fader-track: #dcdfe4;
+      --input-bg: #f0f2f5;
+      --fader-thumb-bg: linear-gradient(180deg, #ffffff, #ccd0d5);
+      --fader-thumb-border: #8a8d91;
+    }
+
+    /* Reset Geral de Layout e Bloqueio de Gestos UI Mobile */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      height: 100vh;
+      height: -webkit-fill-available;
+      overflow: hidden;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-stack);
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* ==========================================================================
+       ESTILIZAÇÃO DE COMPONENTES FIXOS DO CONSOLE
+       ========================================================================== */
+    .top-bar {
+      height: 48px;
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      z-index: 10;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand h1 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      text-transform: uppercase;
+      color: var(--text-main);
+    }
+
+    .midi-status-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: var(--input-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+    }
+
+    .midi-status-badge.connected {
+      background-color: rgba(34, 197, 94, 0.1);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    body.light-theme .midi-status-badge.connected {
+      background-color: #e6f4ea;
+      color: #137333;
+      border-color: #137333;
+    }
+
+    .led-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--text-muted);
+      transition: background-color 0.2s;
+    }
+
+    .connected .led-dot {
+      background-color: #4ade80;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    body.light-theme .connected .led-dot {
+      background-color: #137333;
+      box-shadow: 0 0 4px #137333;
+    }
+
+    .led-dot.blink {
+      background-color: #3b82f6 !important;
+      box-shadow: 0 0 8px #3b82f6 !important;
+    }
+
+    .menu-trigger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 22px;
+      height: 16px;
+    }
+
+    .menu-trigger span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background-color: var(--text-main);
+      border-radius: 2px;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .menu-trigger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .menu-trigger.active span:nth-child(2) { opacity: 0; }
+    .menu-trigger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* ==========================================================================
+       SIDEBAR DE FERRAMENTAS (GERENCIAMENTO DE CENAS E CORES DE SISTEMA)
+       ========================================================================== */
+    .sidebar {
+      position: fixed;
+      top: 48px;
+      right: 0;
+      width: 100%;
+      max-width: 320px;
+      height: calc(100vh - 48px);
+      background-color: var(--bg-surface);
+      border-left: 1px solid var(--border);
+      z-index: 100;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s, border-color 0.2s;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .sidebar.active {
+      transform: translateX(0);
+    }
+
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .crud-select, .crud-input {
+      width: 100%;
+      height: 40px;
+      background-color: var(--input-bg);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 12px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .crud-btn {
+      width: 100%;
+      height: 40px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #ffffff;
+      background-color: var(--border);
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    body.light-theme .crud-btn { color: var(--text-main); }
+    .crud-btn-primary { background-color: var(--primary); color: #ffffff !important; }
+    .crud-btn-primary:active { background-color: var(--primary-hover); }
+    .crud-btn-danger { background-color: var(--danger); color: #ffffff !important; }
+    .crud-btn-danger:active { background-color: #b91c1c; }
+
+    /* ==========================================================================
+       WORKSPACE PRINCIPAL - CONSOLE LAYOUT
+       ========================================================================== */
+    .console-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .master-section {
+      width: 72px;
+      background-color: var(--bg-surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .master-title {
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: 1px;
+    }
+
+    .master-display {
+      font-size: 0.8rem;
+      font-weight: 700;
+      font-family: monospace;
+      background-color: #000000;
+      color: #00ff66;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+    .mixer-container {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(85px, 1fr));
+      gap: 1px;
+      background-color: var(--border);
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      transition: background-color 0.2s;
+    }
+    
+    .mixer-container::-webkit-scrollbar { display: none; }
+
+    .channel-strip {
+      background-color: var(--bg-strip);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 2px;
+      position: relative;
+      height: 100%;
+      transition: background-color 0.2s;
+    }
+
+    .strip-header { width: 90%; text-align: center; }
+
+    .channel-name-input {
+      width: 100%;
+      background: none;
+      border: none;
+      border-bottom: 1px dashed var(--border);
+      color: var(--text-main);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 2px 0;
+      outline: none;
+      text-transform: uppercase;
+    }
+    
+    .channel-name-input:focus { border-bottom-color: var(--primary); }
+
+    .pan-container { width: 85%; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+    .pan-label { font-size: 0.55rem; font-weight: 700; color: var(--text-muted); font-family: monospace; }
+    
+    .pan-slider {
+      width: 100%;
+      height: 14px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--input-bg);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .pan-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 8px;
+      height: 14px;
+      background: var(--text-muted);
+      border-radius: 1px;
+      cursor: pointer;
+    }
+
+    .fader-layout-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      position: relative;
+      padding: 10px 0;
+    }
+
+    .fader-wrapper {
+      width: 24px;
+      height: 100%;
+      min-height: 140px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .vu-meter {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      width: 5px;
+      height: 100%;
+      min-height: 140px;
+      background-color: var(--fader-track);
+      padding: 1px;
+      border-radius: 1px;
+      justify-content: flex-end;
+    }
+
+    .vu-segment { flex: 1; background-color: rgba(0, 0, 0, 0.2); }
+    .vu-segment.green.active  { background-color: #22c55e; box-shadow: 0 0 4px #22c55e; }
+    .vu-segment.yellow.active { background-color: #eab308; box-shadow: 0 0 4px #eab308; }
+    .vu-segment.red.active    { background-color: #ef4444; box-shadow: 0 0 4px #ef4444; }
+
+    .fader-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 140px;
+      height: 6px;
+      background: var(--fader-track);
+      border-radius: 3px;
+      outline: none;
+      position: absolute;
+      transform: rotate(-90deg);
+      touch-action: none;
+      cursor: pointer;
+      margin: 0;
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .fader-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 36px;
+      border-radius: 4px;
+      background: var(--fader-thumb-bg);
+      border: 1px solid var(--fader-thumb-border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+
+    .master-section .fader-input::-webkit-slider-thumb {
+      background: linear-gradient(180deg, var(--primary-hover), var(--primary));
+      border-color: #3b82f6;
+    }
+
+    .volume-display {
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #00ff66;
+      background-color: #000000;
+      padding: 2px 4px;
+      border-radius: 3px;
+      min-width: 28px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .btn-group { display: flex; width: 90%; gap: 4px; margin-top: 4px; }
+
+    .fx-btn, .solo-btn {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 6px 0;
+      cursor: pointer;
+      text-align: center;
+      color: var(--text-main);
+      background: var(--input-bg);
+      transition: background-color 0.1s, border-color 0.1s;
+    }
+
+        .fx-btn {
+      flex: 1.4;
+      );
+    }
+    
+
+
+    .solo-btn {
+      flex: 1;
+      );
+    }
+    
+    .fx-btn:active { background: var(--border); }
+
+    .solo-btn.active {
+      background: linear-gradient(180deg, var(--accent-solo), #ca8a04);
+      border-color: #a16207;
+      color: #000000 !important;
+    }
+    /* ==========================================================================
+       JANELA MODAL (POP-UP DE EDIÇÃO DE FX DE CANAL)
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      padding: 12px;
+    }
+
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+    .modal-content {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .modal-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; }
+    .close-btn { background-color: var(--input-bg); color: var(--text-main); border: 1px solid var(--border); padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+
+    .modal-fx-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      background-color: var(--bg-main);
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .fx-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--bg-strip);
+      padding: 10px 6px;
+      border-radius: 4px;
+    }
+
+    .fx-label { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
+    .fx-slider-wrapper { width: 100%; padding: 4px 0; }
+    
+    .fx-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--input-bg);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    .fx-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+
+    .fx-value { font-size: 0.7rem; font-weight: 700; font-family: monospace; background: #000000; color: #00ff66; padding: 1px 4px; border-radius: 3px; min-width: 24px; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <header class="top-bar">
+    <div class="brand">
+      <h1>XPS-8 Pocket Control</h1>
+      <div class="midi-status-badge" id="midi-badge">
+        <span class="led-dot" id="midi-led"></span>
+        <span id="midi-status-text">Sem MIDI</span>
+      </div>
+    </div>
+    <button class="menu-trigger" id="menu-btn" aria-label="Abrir Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <h3>Visual do Console</h3>
+      <button class="crud-btn" id="btn-toggle-theme" style="background-color: var(--primary); color: #fff;">
+        ALTERNAR TEMA CLARO/ESCURO
+      </button>
+    </div>
+    
+    <div class="sidebar-section">
+      <h3>Gerenciar Mixagens</h3>
+      <select class="crud-select" id="scene-select">
+        <option value="">-- Selecionar Cena --</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section" style="flex-direction: row; gap: 8px;">
+      <button class="crud-btn crud-btn-primary" id="btn-load" style="flex: 1;">ABRIR</button>
+      <button class="crud-btn crud-btn-danger" id="btn-delete" style="flex: 1;">EXCLUIR</button>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Salvar Nova / Sobrescrever</h3>
+      <input type="text" class="crud-input" id="save-name" placeholder="Nome da mixagem..." maxlength="16">
+      <button class="crud-btn crud-btn-primary" id="btn-save" style="background-color: var(--accent-solo); color: #000;">
+        GRAVAR ALTERAÇÕES
+      </button>
+    </div>
+
+    <div class="sidebar-section" style="flex-direction: row; gap: 8px;">
+      <button class="crud-btn" id="btn-export" style="flex: 1;">EXPORTAR</button>
+      <button class="crud-btn" id="btn-import-trigger" style="flex: 1;">IMPORTAR</button>
+      <input type="file" id="import-file" style="display: none;" accept=".json">
+    </div>
+  </aside>
+
+  <div class="console-layout">
+    <main class="mixer-container" id="mixer-container"></main>
+
+    <section class="master-section">
+      <div class="master-title">MASTER</div>
+      <div class="fader-layout-box">
+        <div class="fader-wrapper">
+          <input type="range" class="fader-input" id="master-fader" min="0" max="127" value="127">
+        </div>
+      </div>
+      <div class="master-display" id="master-val">127</div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="fx-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title" id="modal-ch-title">Editar Canal</div>
+        <button class="close-btn" id="modal-close-btn">FECHAR</button>
+      </div>
+      <div class="modal-fx-grid" id="modal-sliders-container"></div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       ENGINE LOGIC CORE (JAVASCRIPT VANILLA EM CAMADAS)
+       ========================================================================== */ -->
+  <script>
+    (function () {
+      'use strict';
+
+      // Camada de Estado Limpa - Apenas com Reverb e Filtro Ativo Compatíveis
+      const APP_STATE = {
+        channels: Array.from({ length: 8 }, (_, idx) => ({
+          id: idx,
+          label: `CH 0${idx + 1}`,
+          volume: 100,
+          pan: 64,
+          reverb: 40,
+          cutoff: 64,
+          resonance: 64,
+          attack: 64,
+          release: 64,
+          isSoloed: false
+        })),
+        masterVolume: 127,
+        activeChannelInPopup: 0,
+        isDirty: false,
+        midiOutput: null,
+        isLoadingScene: false
+      };
+
+      // Mapeamento Estrito dos Control Changes (CC) Operacionais do XPS-10
+      const FX_CONFIG = [
+        { label: "Reverb Envio", key: "reverb", cc: 91 },
+        { label: "Cutoff Filtro", key: "cutoff", cc: 74 },
+        { label: "Ressonância", key: "resonance", cc: 71 },
+        { label: "Ataque (Attack)", key: "attack", cc: 73 },
+        { label: "Repouso (Release)", key: "release", cc: 72 }
+      ];
+
+      const STORAGE_PREFIX = "xps8_mix_";
+      // ==========================================================================
+      // CAMADA DE COMUNICAÇÃO MIDI (HARDWARE DRIVER ENGINE)
+      // ==========================================================================
+      const MidiEngine = {
+        init() {
+          if (navigator.requestMIDIAccess) {
+            navigator.requestMIDIAccess({ sysex: false }).then(
+              access => this.setupMidiAccess(access),
+              () => UIEngine.updateMidiStatus(false, "Erro MIDI")
+            );
+          } else {
+            UIEngine.updateMidiStatus(false, "Sem Suporte");
+          }
+        },
+
+        setupMidiAccess(access) {
+          this.scanDevices(access);
+          access.onstatechange = (e) => this.scanDevices(access);
+        },
+
+        scanDevices(access) {
+          let found = false;
+          for (let output of access.outputs.values()) {
+            const name = output.name.toLowerCase();
+            if (name.includes("xps-10") || name.includes("roland")) {
+              APP_STATE.midiOutput = output;
+              UIEngine.updateMidiStatus(true, "Conectado");
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            APP_STATE.midiOutput = null;
+            UIEngine.updateMidiStatus(false, "Aguardando...");
+          }
+        },
+
+        sendCC(channel, cc, value) {
+          if (APP_STATE.midiOutput) {
+            APP_STATE.midiOutput.send([0xB0 + channel, cc, value]);
+            UIEngine.blinkLed();
+          }
+        }
+      };
+
+      // ==========================================================================
+      // CAMADA DE PERSISTÊNCIA (STORAGE MANAGEMENT)
+      // ==========================================================================
+      const StorageEngine = {
+        saveScene(name) {
+          const key = STORAGE_PREFIX + name;
+          localStorage.setItem(key, JSON.stringify(APP_STATE.channels));
+          APP_STATE.isDirty = false;
+        },
+
+        loadScene(key) {
+          const rawData = localStorage.getItem(key);
+          if (!rawData) return null;
+          try {
+            return JSON.parse(rawData);
+          } catch (e) {
+            console.error("Falha ao ler dados do localStorage.");
+            return null;
+          }
+        },
+
+        deleteScene(key) {
+          localStorage.removeItem(key);
+        },
+
+        getScenes() {
+          return Object.keys(localStorage)
+            .filter(key => key.startsWith(STORAGE_PREFIX))
+            .map(key => key.replace(STORAGE_PREFIX, ""));
+        },
+
+        exportBackup() {
+          const backup = {};
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith(STORAGE_PREFIX)) {
+              backup[key] = JSON.parse(localStorage.getItem(key));
+            }
+          });
+          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const anchor = document.createElement("a");
+          anchor.href = url;
+          anchor.download = "xps8_pocket_backup.json";
+          anchor.click();
+          URL.revokeObjectURL(url);
+        },
+
+        importBackup(files, callback) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const imported = JSON.parse(e.target.result);
+              Object.keys(imported).forEach(key => {
+                if (key.startsWith(STORAGE_PREFIX)) {
+                  localStorage.setItem(key, JSON.stringify(imported[key]));
+                }
+              });
+              callback(true);
+            } catch (err) {
+              callback(false);
+            }
+          };
+          reader.readAsText(files[0]);
+        }
+      };
+      // ==========================================================================
+      // CAMADA DE INTERFACE E RENDERIZAÇÃO DINÂMICA (UI ENGINE) - PARTE 1
+      // ==========================================================================
+      const UIEngine = {
+        dom: {
+          mixer: document.getElementById("mixer-container"),
+          midiLed: document.getElementById("midi-led"),
+          midiStatusText: document.getElementById("midi-status-text"),
+          midiBadge: document.getElementById("midi-badge"),
+          menuBtn: document.getElementById("menu-btn"),
+          sidebar: document.getElementById("sidebar"),
+          sceneSelect: document.getElementById("scene-select"),
+          saveNameInput: document.getElementById("save-name"),
+          modal: document.getElementById("fx-modal"),
+          modalTitle: document.getElementById("modal-ch-title"),
+          modalSliders: document.getElementById("modal-sliders-container"),
+          masterFader: document.getElementById("master-fader"),
+          masterVal: document.getElementById("master-val"),
+          
+          btnToggleTheme: document.getElementById("btn-toggle-theme"),
+          btnLoad: document.getElementById("btn-load"),
+          btnSave: document.getElementById("btn-save"),
+          btnDelete: document.getElementById("btn-delete"),
+          btnExport: document.getElementById("btn-export"),
+          btnImportTrigger: document.getElementById("btn-import-trigger"),
+          importFileInput: document.getElementById("import-file"),
+          modalCloseBtn: document.getElementById("modal-close-btn")
+        },
+
+        init() {
+          this.renderMixer();
+          this.bindGlobalEvents();
+          this.refreshSceneList();
+        },
+
+        updateMidiStatus(connected, text) {
+          this.dom.midiStatusText.innerText = text;
+          if (connected) {
+            this.dom.midiBadge.classList.add("connected");
+          } else {
+            this.dom.midiBadge.classList.remove("connected");
+          }
+        },
+
+        blinkLed() {
+          this.dom.midiLed.classList.add("blink");
+          setTimeout(() => this.dom.midiLed.classList.remove("blink"), 45);
+        },
+
+        renderMixer() {
+          this.dom.mixer.innerHTML = "";
+          APP_STATE.channels.forEach(ch => {
+            const strip = document.createElement("div");
+            strip.className = "channel-strip";
+            strip.id = `strip-${ch.id}`;
+            
+            strip.innerHTML = `
+              <div class="strip-header">
+                <input type="text" class="channel-name-input" id="name-in-${ch.id}" value="${ch.label}" placeholder="CH 0${ch.id + 1}" maxlength="12">
+              </div>
+              <div class="pan-container">
+                <span class="pan-label" id="pdisp-${ch.id}">C</span>
+                <input type="range" class="pan-slider" id="pan-${ch.id}" min="0" max="127" value="${ch.pan}">
+              </div>
+              <div class="fader-layout-box">
+                <div class="vu-meter" id="vu-${ch.id}">
+                  ${Array.from({ length: 15 }, (_, idx) => `
+                    <div class="vu-segment ${idx < 2 ? 'red' : idx < 5 ? 'yellow' : 'green'}"></div>
+                  `).join("")}
+                </div>
+                <div class="fader-wrapper">
+                  <input type="range" class="fader-input" id="fad-${ch.id}" min="0" max="127" value="${ch.volume}">
+                </div>
+              </div>
+              <div class="volume-display" id="vdisp-${ch.id}">${ch.volume}</div>
+              <div class="btn-group">
+                <button class="fx-btn" data-ch="${ch.id}">FX</button>
+                <button class="solo-btn ${ch.isSoloed ? 'active' : ''}" id="solo-${ch.id}" data-ch="${ch.id}">S</button>
+              </div>
+            `;
+            this.dom.mixer.appendChild(strip);
+            this.updateVUMeter(ch.id, ch.volume);
+            this.updatePanDisplay(ch.id, ch.pan);
+            this.bindChannelEvents(ch.id);
+          });
+        },
+
+        bindChannelEvents(chId) {
+          const fad = document.getElementById(`fad-${chId}`);
+          const pan = document.getElementById(`pan-${chId}`);
+          const nameIn = document.getElementById(`name-in-${chId}`);
+          
+          fad.addEventListener("input", (e) => {
+            const vol = parseInt(e.target.value);
+            APP_STATE.channels[chId].volume = vol;
+            document.getElementById(`vdisp-${chId}`).innerText = vol;
+            this.updateVUMeter(chId, vol);
+            APP_STATE.isDirty = true;
+            
+            if (!this.checkSoloLock(chId)) {
+              MidiEngine.sendCC(chId, 7, vol);
+            }
+          });
+
+          pan.addEventListener("input", (e) => {
+            const pVal = parseInt(e.target.value);
+            APP_STATE.channels[chId].pan = pVal;
+            this.updatePanDisplay(chId, pVal);
+            APP_STATE.isDirty = true;
+            MidiEngine.sendCC(chId, 10, pVal);
+          });
+
+          nameIn.addEventListener("change", (e) => {
+            APP_STATE.channels[chId].label = e.target.value.trim() || `CH 0${chId + 1}`;
+            APP_STATE.isDirty = true;
+          });
+        },
+
+        updateVUMeter(chId, volume) {
+          const segments = document.querySelectorAll(`#vu-${chId} .vu-segment`);
+          const activeCount = Math.ceil((volume / 127) * 15);
+          segments.forEach((seg, idx) => {
+            const invertedIndex = 14 - idx;
+            if (invertedIndex < activeCount) {
+              seg.classList.add("active");
+            } else {
+              seg.classList.remove("active");
+            }
+          });
+        },
+
+        updatePanDisplay(chId, pVal) {
+          const disp = document.getElementById(`pdisp-${chId}`);
+          if (pVal === 64) disp.innerText = "C";
+          else if (pVal < 64) disp.innerText = "L" + Math.round(((64 - pVal) / 64) * 100);
+          else disp.innerText = "R" + Math.round(((pVal - 64) / 64) * 100);
+        },
+        // ==========================================================================
+        // CAMADA DE INTERFACE E RENDERIZAÇÃO DINÂMICA (UI ENGINE) - PARTE 2
+        // ==========================================================================
+        toggleSolo(chId) {
+          const ch = APP_STATE.channels[chId];
+          ch.isSoloed = !ch.isSoloed;
+          document.getElementById(`solo-${chId}`).classList.toggle("active", ch.isSoloed);
+          APP_STATE.isDirty = true;
+          this.applySoloMuteRules();
+        },
+
+        checkSoloLock(chId) {
+          const anySolo = APP_STATE.channels.some(c => c.isSoloed);
+          if (anySolo && !APP_STATE.channels[chId].isSoloed) return true;
+          return false;
+        },
+
+        applySoloMuteRules() {
+          for (let i = 0; i < 8; i++) {
+            if (this.checkSoloLock(i)) {
+              MidiEngine.sendCC(i, 7, 0);
+            } else {
+              MidiEngine.sendCC(i, 7, APP_STATE.channels[i].volume);
+            }
+          }
+        },
+
+        openFxModal(chId) {
+          APP_STATE.activeChannelInPopup = chId;
+          const chData = APP_STATE.channels[chId];
+          this.dom.modalTitle.innerText = `Filtros & FX - ${chData.label.toUpperCase()}`;
+          
+          this.dom.modalSliders.innerHTML = FX_CONFIG.map(c => `
+            <div class="fx-column">
+              <span class="fx-label">${c.label}</span>
+              <div class="fx-slider-wrapper">
+                <input type="range" class="fx-slider" id="mdl-${c.key}" min="0" max="127" value="${chData[c.key]}">
+              </div>
+              <span class="fx-value" id="vmdl-${c.key}">${chData[c.key]}</span>
+            </div>
+          `).join("");
+
+          FX_CONFIG.forEach(c => {
+            const input = document.getElementById(`mdl-${c.key}`);
+            const disp = document.getElementById(`vmdl-${c.key}`);
+            
+            input.addEventListener("input", (e) => {
+              const val = parseInt(e.target.value);
+              disp.innerText = val;
+              APP_STATE.channels[APP_STATE.activeChannelInPopup][c.key] = val;
+              APP_STATE.isDirty = true;
+              MidiEngine.sendCC(APP_STATE.activeChannelInPopup, c.cc, val);
+            });
+          });
+
+          this.dom.modal.classList.add("active");
+        },
+
+        refreshSceneList() {
+          const list = StorageEngine.getScenes();
+          this.dom.sceneSelect.innerHTML = '<option value="">-- Selecionar Cena --</option>';
+          list.forEach(name => {
+            const opt = document.createElement("option");
+            opt.value = STORAGE_PREFIX + name;
+            opt.innerText = name;
+            this.dom.sceneSelect.appendChild(opt);
+          });
+        },
+
+        bindGlobalEvents() {
+          // Gatilho de Alternância do Tema de Cor (Escuro/Claro)
+          this.dom.btnToggleTheme.addEventListener("click", () => {
+            document.body.classList.toggle("light-theme");
+          });
+
+          // Controle de exibição da Sidebar pelo menu Sanduíche
+          this.dom.menuBtn.addEventListener("click", () => {
+            this.dom.menuBtn.classList.toggle("active");
+            this.dom.sidebar.classList.toggle("active");
+          });
+
+          // Controle do Master Fader Geral
+          this.dom.masterFader.addEventListener("input", (e) => {
+            const v = parseInt(e.target.value);
+            this.dom.masterVal.innerText = v;
+            APP_STATE.masterVolume = v;
+            for (let i = 0; i < 8; i++) {
+              MidiEngine.sendCC(i, 11, v);
+            }
+          });
+
+          // Cliques internos nos canais (Delegação para botões FX e Solo)
+          this.dom.mixer.addEventListener("click", (e) => {
+            if (e.target.classList.contains("fx-btn")) {
+              this.openFxModal(parseInt(e.target.dataset.ch));
+            } else if (e.target.classList.contains("solo-btn")) {
+              this.toggleSolo(parseInt(e.target.dataset.ch));
+            }
+          });
+
+          // Vinculação dos botões de controle de mixagem na Sidebar
+          this.dom.btnLoad.addEventListener("click", () => this.executeLoad());
+          this.dom.btnSave.addEventListener("click", () => this.executeSave());
+          this.dom.btnDelete.addEventListener("click", () => this.executeDelete());
+          this.dom.btnExport.addEventListener("click", () => StorageEngine.exportBackup());
+          this.dom.btnImportTrigger.addEventListener("click", () => this.dom.importFileInput.click());
+          this.dom.importFileInput.addEventListener("change", (e) => this.executeImport(e));
+          this.dom.modalCloseBtn.addEventListener("click", () => this.dom.modal.classList.remove("active"));
+        },
+
+        executeSave() {
+          const name = this.dom.saveNameInput.value.trim();
+          if (!name) return alert("Digite um nome válido para salvar a mixagem!");
+          StorageEngine.saveScene(name);
+          this.dom.saveNameInput.value = "";
+          this.refreshSceneList();
+          alert("Configurações gravadas com sucesso!");
+        },
+
+        executeLoad() {
+          const key = this.dom.sceneSelect.value;
+          if (!key) return alert("Selecione uma mixagem da lista primeiro.");
+          if (APP_STATE.isDirty && !confirm("Você possui modificações não salvas nesta sessão. Deseja descartá-las?")) return;
+          
+          const loadedChannels = StorageEngine.loadScene(key);
+          if (loadedChannels) {
+            APP_STATE.isLoadingScene = true;
+            loadedChannels.forEach((ch, idx) => {
+              if (idx < 8) APP_STATE.channels[idx] = { ...APP_STATE.channels[idx], ...ch };
+            });
+            
+            this.renderMixer();
+            this.applySoloMuteRules();
+            
+            // Sincroniza e atualiza os parâmetros permitidos no hardware XPS-10
+            for (let i = 0; i < 8; i++) {
+              const state = APP_STATE.channels[i];
+              MidiEngine.sendCC(i, 10, state.pan);
+              FX_CONFIG.forEach(c => {
+                MidiEngine.sendCC(i, c.cc, state[c.key]);
+              });
+            }
+            
+            APP_STATE.isDirty = false;
+            setTimeout(() => { APP_STATE.isLoadingScene = false; }, 400);
+            alert("Cena carregada e sincronizada via MIDI!");
+          }
+        },
+
+        executeDelete() {
+          const key = this.dom.sceneSelect.value;
+          if (!key) return alert("Selecione uma mixagem para excluir.");
+          if (confirm("Tem certeza que deseja excluir permanentemente esta mixagem?")) {
+            StorageEngine.deleteScene(key);
+            this.refreshSceneList();
+            APP_STATE.isDirty = false;
+          }
+        },
+
+        executeImport(e) {
+          const files = e.target.files;
+          if (!files || files.length === 0) return;
+          StorageEngine.importBackup(files[0], (success) => {
+            if (success) {
+              this.refreshSceneList();
+              alert("Mixagens importadas com sucesso!");
+            } else {
+              alert("Falha crítica ao decodificar arquivo JSON.");
+            }
+          });
+        }
+      };
+
+          // ==========================================================================
+      // INICIALIZAÇÃO DE ECOSSISTEMA E REGISTRO DO SERVICE WORKER (PWA)
+      // ==========================================================================
+      document.addEventListener("DOMContentLoaded", () => {
+        MidiEngine.init();
+        UIEngine.init();
+      });
+
+      // Registra o Service Worker apenas quando a página estiver totalmente carregada
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registrado!', reg.scope))
+            .catch(err => console.error('Falha de Service Worker:', err));
+        });
+      }
+
+    })();
+  </script>
+</body>
+</html>
+
