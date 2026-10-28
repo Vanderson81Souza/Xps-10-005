@@ -1,5 +1,5 @@
 {
-  "id": "xps-8-mixer-app",
+  "id": "./",
   "name": "XPS-8 Pocket Multi-Mixer & EQ",
   "short_name": "XPS-8 Control",
   "description": "Controlador profissional de audio de 8 canais otimizado offline para smartphones.",
@@ -11,11 +11,11 @@
   "orientation": "any",
   "categories": ["music", "audio", "utilities"],
   "icons": [
-    {
-      "src": "./icons/icon-1024.png",
-      "sizes": "192x192 512x512 1024x1024",
-      "type": "image/png",
-      "purpose": "any maskable"
+    { 
+      "src": "./icons/icon-1024.png", 
+      "sizes": "192x192 512x512 1024x1024", 
+      "type": "image/png", 
+      "purpose": "any maskable" 
     }
   ]
 }
