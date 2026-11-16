@@ -1,12 +1,14 @@
-const CACHE_NAME = 'pwa-cache-v1';
+const CACHE_NAME = 'xps8-pocket-v2';
 const ASSETS = [
-    '/index.html',
-    '/manifest.json',
-    '/icons/icon-1024.png'
+    './',
+    './index.html',
+    './manifest.json',
+    './icons/icon-1024.png'
 ];
 
-// Instalação do Service Worker e armazenamento de arquivos estáticos
+// Instalação: baixa os novos arquivos e força a ativação imediata
 self.addEventListener('install', event => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => {
             return cache.addAll(ASSETS);
@@ -14,7 +16,7 @@ self.addEventListener('install', event => {
     );
 });
 
-// Ativação e limpeza de caches antigos
+// Ativação: apaga caches antigos e assume o controle da página na hora
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => {
@@ -25,15 +27,21 @@ self.addEventListener('activate', event => {
                     }
                 })
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
-// OBRIGATÓRIO PARA ANDROID: Responder mesmo em modo offline
+// Estratégia Network-First: prioriza código atualizado e usa cache se estiver offline
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request).then(cachedResponse => {
-            return cachedResponse || fetch(event.request);
-        })
+        fetch(event.request)
+            .then(networkResponse => {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseClone);
+                });
+                return networkResponse;
+            })
+            .catch(() => caches.match(event.request))
     );
 });
